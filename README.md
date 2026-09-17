@@ -6,13 +6,14 @@ Predicting which customers are likely to stop using a service -- and explaining 
 
 | Model | F1 (Churn) | AUC-ROC | Recall |
 | --- | --- | --- | --- |
-| **XGBoost (Tuned)** | **0.6316** | **0.8465** | **0.8021** |
-| Random Forest | 0.628 | 0.844 | 0.727 |
-| Logistic Regression | 0.626 | 0.845 | 0.797 |
-| LightGBM | 0.621 | 0.836 | 0.745 |
-| XGBoost + SMOTE | 0.592 | 0.825 | 0.611 |
+| **XGBoost (Tuned, holdout)** | **0.6316** | **0.8465** | **0.8021** |
+| Random Forest (balanced) | 0.6283 | 0.8444 | 0.7271 |
+| Logistic Regression (balanced) | 0.6258 | 0.8445 | 0.7972 |
+| LightGBM (balanced) | 0.6209 | 0.8356 | 0.7453 |
+| XGBoost (scale_pos_weight, untuned) | 0.6143 | 0.8344 | 0.7266 |
+| XGBoost + SMOTE | 0.5919 | 0.8251 | 0.6110 |
 
-**Best model**: Tuned XGBoost with AUC-ROC 0.847 and 80% recall on churners.
+**Best model**: Tuned XGBoost (via `RandomizedSearchCV` on a held-out dev split) evaluated on a never-touched holdout set -- AUC-ROC 0.8465 and 80% recall on churners.
 
 ## Key Findings (SHAP-validated)
 
@@ -30,26 +31,27 @@ Customer Churn/
     requirements.txt
     .gitignore
     models/
-        churn_model.pkl                                    # Trained XGBoost model
+        churn_model.pkl                                             # Trained, tuned XGBoost model (produced by notebook 2)
     notebooks/
-        eda output file.ipynb                              # Exploratory Data Analysis (with outputs)
-        feature engineering and modeling output file.ipynb  # Modeling + SHAP (with outputs)
+        eda_output_file.ipynb                                       # Exploratory Data Analysis (with outputs)
+        feature_engineering_and_modeling_output_file.ipynb          # Modeling + SHAP (with outputs)
 ```
 
 ## Notebooks
 
-### 1. EDA (`eda output file.ipynb`)
+### 1. EDA (`eda_output_file.ipynb`)
 
 - Target distribution (73/27 split)
 - Feature-wise churn rates
 - Correlation analysis
 - Key visualizations (churn by contract, tenure, services)
 
-### 2. Modeling + Explainability (`feature engineering and modeling output file.ipynb`)
+### 2. Modeling + Explainability (`feature_engineering_and_modeling_output_file.ipynb`)
 
-- Feature engineering (services_count, charges_per_tenure_month)
-- 5 models with stratified 5-fold CV
+- Feature engineering (`services_count`, `charges_per_tenure_month`, `has_tech_support_and_security`)
+- 5 models with stratified 5-fold CV: Logistic Regression, Random Forest, XGBoost, LightGBM, XGBoost + SMOTE
 - Class imbalance: class weighting vs SMOTE comparison
+- Hyperparameter tuning (`RandomizedSearchCV`) on a dev split, with final metrics reported on a separate, untouched holdout set
 - Cost-benefit threshold optimization
 - SHAP global importance + individual waterfall plots
 - High-risk customer profiling
@@ -60,7 +62,7 @@ Customer Churn/
 
 ## Tech Stack
 
-Python, pandas, scikit-learn, XGBoost, LightGBM, SHAP, matplotlib, seaborn
+Python, pandas, scikit-learn, XGBoost, LightGBM, imbalanced-learn (SMOTE), SHAP, matplotlib, seaborn
 
 ## How to Run
 
